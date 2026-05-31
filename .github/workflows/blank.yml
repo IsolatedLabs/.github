@@ -1,0 +1,75 @@
+name: Give notice when most of the organization is asleep.
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+      timezone: "America/Lima"
+    - cron: "0 8 * * *"
+      timezone: "America/Lima"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update the Organization's Status
+        id: update
+        shell: bash
+        run: |
+          FILE=".github/profile/README.md"
+
+          if [ ! -f "$FILE" ]; then
+            echo "README not found: $FILE"
+            exit 1
+          fi
+
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" = '0 0 * * *' ]; then
+            NEW_TITLE="# Isolated Labs (Sleeping)"
+            COMMIT_MSG="I'll give you a heads-up when most of the organization is already asleep."
+          elif [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" = '0 8 * * *' ]; then
+            NEW_TITLE="# Isolated Labs"
+            COMMIT_MSG="The organization has just woken up"
+          else
+            echo "Manual run: no changes applied."
+            exit 0
+          fi
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          file = Path(".github/profile/README.md")
+          text = file.read_text(encoding="utf-8")
+
+          old = "# Isolated Labs"
+          new = "${NEW_TITLE}"
+
+          if old in text:
+              text = text.replace(old, new, 1)
+          elif new not in text:
+              text = new + "\n\n" + text
+
+          file.write_text(text, encoding="utf-8")
+          PY
+
+          echo "COMMIT_MSG=$COMMIT_MSG" >> "$GITHUB_ENV"
+
+      - name: Commit and push
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/profile/README.md
+          git commit -m "$COMMIT_MSG"
+          git push
