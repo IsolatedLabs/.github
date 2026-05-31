@@ -23,7 +23,7 @@ jobs:
         id: update
         shell: bash
         run: |
-          FILE=".github/profile/README.md"
+          FILE="profile/README.md"
 
           if [ ! -f "$FILE" ]; then
             echo "README not found: $FILE"
