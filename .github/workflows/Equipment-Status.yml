@@ -2,8 +2,7 @@ name: Give notice when most of the organization is asleep.
 
 on:
   schedule:
-    - cron: "0 0 * * *"
-    - cron: "0 8 * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -27,15 +26,14 @@ jobs:
             exit 1
           fi
 
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" = "0 0 * * *" ]; then
+          HOUR=$(TZ=America/Lima date +%H)
+
+          if [ "$HOUR" -ge 23 ] || [ "$HOUR" -lt 7 ]; then
             export NEW_TITLE="# Isolated Labs (Sleeping)"
             export COMMIT_MSG="I'll give you a heads-up when most of the organization is already asleep."
-          elif [ "${{ github.event_name }}" = "schedule" ] && [ "${{ github.event.schedule }}" = "0 8 * * *" ]; then
+          else
             export NEW_TITLE="# Isolated Labs"
             export COMMIT_MSG="The organization has just woken up"
-          else
-            echo "Manual run: no changes applied."
-            exit 0
           fi
 
           python3 <<PY
