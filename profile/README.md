@@ -1,6 +1,6 @@
 <div align="center">
 
-# Isolated Labs (Sleeping)
+# Isolated Labs (Sleeping) (Sleeping)
 
 <sub><i>Organization of project programming for the public made with an isolated environment.</i></sub>
 
